@@ -4,7 +4,7 @@ This workspace contains the LangChain-based dependency updater agent plus the in
 
 ### Repository Layout
 
-- `agents/langchain-deps/` – agent package, LangChain tools, CLI entrypoints, and tests.
+- `agents/` – agent package, LangChain tools, CLI entrypoints, and tests.
 - `infra/` – Runloop blueprint configuration, provisioning scripts (`infra/scripts`), and orchestration helpers.
 - `main.py` – repo-level CLI helpers for building devbox blueprints and launching remote runs.
 
@@ -15,7 +15,7 @@ This workspace contains the LangChain-based dependency updater agent plus the in
    ```bash
    uv venv
    source .venv/bin/activate
-   uv pip install -e agents/langchain-deps -e infra
+   uv pip install -e agents -e infra
    ```
 3. Open the folder in VSCode (`code .`), then press `⌘⇧P`/`Ctrl+Shift+P` → **Python: Select Interpreter** → pick `<repo>/.venv/bin/python`. VSCode will activate the same environment for terminals, the language server, and test discovery.
 4. (Optional) Set `"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"` in `.vscode/settings.json` so teammates reuse the interpreter automatically.
@@ -27,10 +27,10 @@ See the sub-directory READMEs for per-package commands that work seamlessly once
 
 ```bash
 # Run the agent's unit tests from the repo root
-uv run pytest agents/langchain-deps/tests
+uv run pytest agents/langchain_deps_agent
 
 # Build or update the Runloop blueprint
-uv run python infra/scripts/build_blueprint.py --name dependency-updater --agent-repo tode-rl/langchainai-dependency-update-agent-demo
+uv run python main.py build-blueprint --name dependency-updater --agent-repo tode-rl/langchainai-dependency-update-agent-demo
 
 # Launch the agent remotely via the CLI wrapper
 uv run python main.py run-remote-agent --repo https://github.com/org/project
@@ -38,5 +38,5 @@ uv run python main.py run-remote-agent --repo https://github.com/org/project
 
 ### Next Steps
 
-- `agents/langchain-deps/README.md` – developing and testing the LangChain agent package (including VSCode tips).
+- `agents/README.md` – developing and testing the LangChain agent package (including VSCode tips).
 - `infra/README.md` – building Runloop blueprints and executing the agent on devboxes.

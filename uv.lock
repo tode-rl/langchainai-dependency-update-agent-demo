@@ -298,7 +298,7 @@ wheels = [
 [[package]]
 name = "langchain-deps-agent"
 version = "0.1.0"
-source = { editable = "agents/langchain-deps" }
+source = { editable = "agents" }
 dependencies = [
     { name = "httpx" },
     { name = "langchain" },
