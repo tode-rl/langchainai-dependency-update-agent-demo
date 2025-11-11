@@ -5,7 +5,7 @@ import os
 
 from runloop_api_client import Runloop
 
-from monorepo_cli import BlueprintMemory, DEFAULT_STATE_FILE, BlueprintRecord
+from monorepo_cli import BlueprintMemory, DEFAULT_STATE_FILE, AGENT_INSTALL_PATH
 from monorepo_cli.blueprint_build import RepoSlug, build_blueprint
 from monorepo_cli.devbox_runner import (
     GitRepo,
@@ -25,8 +25,7 @@ def build_blueprint_command(args: argparse.Namespace) -> None:
         agent_repo=repo,
         api_key=api_key,
     )
-    agent_path = f"/home/user/{repo.name}"
-    record = BlueprintMemory().remember(args.name, blueprint_id, agent_path=agent_path)
+    record = BlueprintMemory().remember(args.name, blueprint_id)
     print(
         f"Blueprint '{record.name}' built successfully.\n"
         f"  ID: {record.blueprint_id}\n"
@@ -37,35 +36,25 @@ def build_blueprint_command(args: argparse.Namespace) -> None:
 def _resolve_blueprint(args: argparse.Namespace, memory: BlueprintMemory):
     blueprint_id = args.blueprint_id
     blueprint_name = args.blueprint_name
-    agent_path = args.agent_install_path
 
-    record: BlueprintRecord | None = None
     if blueprint_name:
         record = memory.recall(blueprint_name)
         if not record:
             raise RuntimeError(f"No cached blueprint named '{blueprint_name}' was found.")
-    elif not blueprint_id:
-        record = memory.recall()
-
-    if record:
         if not blueprint_id:
             blueprint_id = record.blueprint_id
-        if not blueprint_name:
+    elif not blueprint_id:
+        record = memory.recall()
+        if record:
+            blueprint_id = record.blueprint_id
             blueprint_name = record.name
-        if not agent_path:
-            agent_path = record.agent_path
 
-    if not agent_path:
-        raise RuntimeError(
-            "Unable to determine the agent install path. "
-            "Rebuild the blueprint so it can be cached or pass --agent-install-path explicitly."
-        )
     if not blueprint_id:
         raise RuntimeError(
             "A blueprint ID is required to launch a devbox. "
             "Pass --blueprint-id or run build-blueprint first."
         )
-    return blueprint_id, blueprint_name, agent_path
+    return blueprint_id, blueprint_name, AGENT_INSTALL_PATH
 
 
 def run_remote_agent_command(args: argparse.Namespace) -> None:
@@ -128,10 +117,6 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--devbox-name", help="Optional devbox name override.")
     run_parser.add_argument("--repo-path", help="Override repo path inside the devbox.")
     run_parser.add_argument("--llm-model", help="LLM model override for the agent.")
-    run_parser.add_argument(
-        "--agent-install-path",
-        help="Path inside the devbox where the agent repository is installed (defaults to cached blueprint metadata).",
-    )
     run_parser.add_argument("--no-dry-run", action="store_true", help="Allow the agent to push changes.")
     run_parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after execution.")
     run_parser.add_argument("--quiet", action="store_true", help="Suppress streaming agent logs.")

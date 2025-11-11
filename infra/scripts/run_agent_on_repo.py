@@ -6,6 +6,7 @@ import uuid
 
 from runloop_api_client import Runloop
 
+from monorepo_cli import AGENT_INSTALL_PATH
 from monorepo_cli.devbox_runner import (
     GitRepo,
     build_agent_command,
@@ -28,11 +29,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after the agent finishes.")
     parser.add_argument("--llm-model", help="Override the LLM model passed to LangChain.")
     parser.add_argument("--quiet", action="store_true", help="Suppress streaming agent logs.")
-    parser.add_argument(
-        "--agent-install-path",
-        required=True,
-        help="Path inside the devbox where the agent repository lives (e.g. /home/user/langchain-dependency-agent).",
-    )
     return parser.parse_args()
 
 
@@ -60,7 +56,7 @@ def main() -> None:
                 dry_run=not args.no_dry_run,
                 llm_model=args.llm_model,
                 verbose=not args.quiet,
-                agent_install_path=args.agent_install_path,
+                agent_install_path=AGENT_INSTALL_PATH,
             ),
         )
     finally:
