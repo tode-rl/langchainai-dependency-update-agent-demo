@@ -1,5 +1,5 @@
 [project]
-name = "runloop-blueprint-tools"
+name = "runloop-infra-tools"
 version = "0.1.0"
 description = "Utilities for building Runloop blueprints and running the LangChain dependency agent."
 readme = "README.md"
@@ -11,3 +11,6 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["scripts"]

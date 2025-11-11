@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 members = [
     "langchain-deps-agent",
     "langchainai-dependency-update-agent",
-    "runloop-blueprint-tools",
+    "runloop-infra-tools",
 ]
 
 [[package]]
@@ -837,9 +837,9 @@ wheels = [
 ]
 
 [[package]]
-name = "runloop-blueprint-tools"
+name = "runloop-infra-tools"
 version = "0.1.0"
-source = { editable = "infra/runloop-blueprint" }
+source = { editable = "infra" }
 dependencies = [
     { name = "runloop-api-client" },
 ]

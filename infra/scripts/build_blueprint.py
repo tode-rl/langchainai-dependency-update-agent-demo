@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+
 from monorepo_cli import BlueprintMemory
 from monorepo_cli.blueprint_build import RepoSlug, build_blueprint
 

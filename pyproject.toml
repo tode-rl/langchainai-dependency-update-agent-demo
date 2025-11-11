@@ -11,5 +11,5 @@ dependencies = [
 [tool.uv.workspace]
 members = [
     "agents/langchain-deps",
-    "infra/runloop-blueprint",
+    "infra",
 ]
