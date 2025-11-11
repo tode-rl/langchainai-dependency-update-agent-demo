@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-dry-run", action="store_true", help="Allow the agent to push changes.")
     parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after the agent finishes.")
     parser.add_argument("--llm-model", help="Override the LLM model passed to LangChain.")
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose agent logging.")
+    parser.add_argument("--quiet", action="store_true", help="Suppress streaming agent logs.")
     parser.add_argument(
         "--agent-install-path",
         required=True,
@@ -59,7 +59,7 @@ def main() -> None:
                 branch_name=args.branch_name,
                 dry_run=not args.no_dry_run,
                 llm_model=args.llm_model,
-                verbose=args.verbose,
+                verbose=not args.quiet,
                 agent_install_path=args.agent_install_path,
             ),
         )

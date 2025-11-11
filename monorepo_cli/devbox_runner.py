@@ -76,8 +76,8 @@ def build_agent_command(
         args.append("--no-dry-run")
     if llm_model:
         args.extend(["--llm-model", llm_model])
-    if verbose:
-        args.append("--verbose")
+    if not verbose:
+        args.append("--quiet")
     command = " ".join(shlex.quote(part) for part in args)
     agent_dir = shlex.quote(agent_install_path)
     return f"cd {agent_dir} && {command}"

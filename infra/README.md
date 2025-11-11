@@ -27,6 +27,7 @@ python scripts/build_blueprint.py --name dependency-updater --agent-repo your-or
 
 # 2. Run the agent against a repo using the newly built blueprint
 python scripts/run_agent_on_repo.py --blueprint-name dependency-updater \
+    --agent-install-path /home/user/langchainai-dependency-update-agent-demo \
     --repo https://github.com/org/project \
     --llm-model gpt-5-mini
 ```

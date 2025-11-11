@@ -53,18 +53,27 @@ class DependencyUpdaterAgent:
         repo_summary = self.repo_tool.describe_repo(request.repo)
         tools = build_dependency_tools(repo_summary.repo_path)
         llm = self._resolve_llm(request.settings).bind_tools(tools)
-        graph = self._create_graph(llm, tools)
+        graph = self._create_graph(llm, tools, verbose=request.settings.verbose)
 
         prompt_input = self._build_prompt_input(request, repo_summary)
         initial_messages = self._build_initial_messages(prompt_input, repo_summary)
-        final_state = graph.invoke(
+        if request.settings.verbose:
+            self._log("agent", "Starting dependency analysis run.")
+        final_state: Optional[AgentState] = None
+        for state in graph.stream(
             {"messages": initial_messages},
             config={"recursion_limit": request.settings.max_steps},
-        )
+            stream_mode="values",
+        ):
+            final_state = state
+        if not final_state:
+            raise RuntimeError("Agent graph returned no state.")
         raw_output = self._extract_response_text(final_state.get("messages", []))
         plan = self._normalize_plan(raw_output, repo_summary)
         report_path = self._write_report(plan, request.settings.repo_path)
         applied = [f"Generated dependency upgrade plan with {len(plan.get('upgrades', []))} suggestions."]
+        if request.settings.verbose:
+            self._log("agent", f"Plan generated with {len(plan.get('upgrades', []))} suggestions.")
         return DependencyUpdateResult(
             applied_changes=applied,
             pr_branch=request.settings.branch_name,
@@ -109,23 +118,7 @@ class DependencyUpdaterAgent:
     def _extract_response_text(self, messages: List[BaseMessage]) -> str:
         for message in reversed(messages):
             if isinstance(message, AIMessage):
-                content = message.content
-                if isinstance(content, str):
-                    return content
-                if isinstance(content, list):
-                    chunks: List[str] = []
-                    for part in content:
-                        if isinstance(part, dict):
-                            if part.get("type") == "tool_call":
-                                continue
-                            text = part.get("text")
-                            if text:
-                                chunks.append(text)
-                        else:
-                            chunks.append(str(part))
-                    if chunks:
-                        return "".join(chunks).strip()
-                return json.dumps(content)
+                return self._render_message_content(message.content)
         raise RuntimeError("Agent graph did not produce a final AIMessage response.")
 
     def _normalize_plan(self, raw_output: str, repo_summary: RepoMetadata) -> Dict[str, Any]:
@@ -143,9 +136,7 @@ class DependencyUpdaterAgent:
         }
 
     def _write_report(self, plan: Dict[str, Any], repo_path: Path) -> Path:
-        reports_dir = repo_path / ".runloop"
-        reports_dir.mkdir(exist_ok=True)
-        plan_path = reports_dir / "dependency_plan.json"
+        plan_path = repo_path / "dependency_plan.json"
         plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
         return plan_path
 
@@ -160,12 +151,29 @@ class DependencyUpdaterAgent:
 
         return ChatOpenAI(model=model_name, temperature=0)
 
-    def _create_graph(self, llm: BaseChatModel, tools: List[Any]):
+    def _create_graph(self, llm: BaseChatModel, tools: List[Any], verbose: bool = False):
         tool_node = ToolNode(tools)
 
         def call_model(state: AgentState) -> AgentState:
             response = llm.invoke(state["messages"])
+            if verbose and isinstance(response, AIMessage):
+                tool_calls = getattr(response, "tool_calls", None)
+                if tool_calls:
+                    for call in tool_calls:
+                        name = call.get("name")
+                        args = call.get("args")
+                        self._log("agent", f"Calling tool '{name}' with args {args}")
+                else:
+                    self._log("agent", self._render_message_content(response.content))
             return {"messages": [response]}
+
+        def invoke_tools(state: AgentState) -> AgentState:
+            result = tool_node.invoke(state)
+            if verbose:
+                message = result["messages"][-1]
+                label = getattr(message, "name", None) or getattr(message, "tool_call_id", "tool")
+                self._log(f"tool:{label}", self._render_message_content(message.content))
+            return result
 
         def should_continue(state: AgentState):
             last_message = state["messages"][-1]
@@ -175,8 +183,29 @@ class DependencyUpdaterAgent:
 
         workflow = StateGraph(AgentState)
         workflow.add_node("agent", call_model)
-        workflow.add_node("tools", tool_node)
+        workflow.add_node("tools", invoke_tools)
         workflow.set_entry_point("agent")
         workflow.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
         workflow.add_edge("tools", "agent")
         return workflow.compile()
+
+    def _render_message_content(self, content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            chunks: List[str] = []
+            for part in content:
+                if isinstance(part, dict):
+                    if part.get("type") == "tool_call":
+                        continue
+                    text = part.get("text")
+                    if text:
+                        chunks.append(text)
+                else:
+                    chunks.append(str(part))
+            if chunks:
+                return "".join(chunks).strip()
+        return json.dumps(content)
+
+    def _log(self, source: str, message: str) -> None:
+        print(f"[{source}] {message}", flush=True)

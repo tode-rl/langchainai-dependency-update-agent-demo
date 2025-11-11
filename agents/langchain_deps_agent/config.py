@@ -19,8 +19,8 @@ class AgentSettings(BaseModel):
         description="Maximum reasoning steps (graph recursion limit) before aborting.",
     )
     verbose: bool = Field(
-        default=False,
-        description="Enable verbose AgentExecutor logging during runs.",
+        default=True,
+        description="Stream the agent's intermediate reasoning and tool calls to stdout.",
     )
     dry_run: bool = Field(
         default=True,
