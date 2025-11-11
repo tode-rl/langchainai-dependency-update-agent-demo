@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 import httpx
-from langchain.tools import StructuredTool
+from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
 from .github_repo_tool import RepoMetadata, RepoScannerTool

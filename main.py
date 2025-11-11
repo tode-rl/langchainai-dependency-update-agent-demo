@@ -25,7 +25,8 @@ def build_blueprint_command(args: argparse.Namespace) -> None:
         agent_repo=repo,
         api_key=api_key,
     )
-    record = BlueprintMemory().remember(args.name, blueprint_id)
+    agent_path = f"/home/user/{repo.name}"
+    record = BlueprintMemory().remember(args.name, blueprint_id, agent_path=agent_path)
     print(
         f"Blueprint '{record.name}' built successfully.\n"
         f"  ID: {record.blueprint_id}\n"
@@ -36,23 +37,35 @@ def build_blueprint_command(args: argparse.Namespace) -> None:
 def _resolve_blueprint(args: argparse.Namespace, memory: BlueprintMemory):
     blueprint_id = args.blueprint_id
     blueprint_name = args.blueprint_name
+    agent_path = args.agent_install_path
+
     if blueprint_id or blueprint_name:
-        return blueprint_id, blueprint_name
+        record = memory.recall(blueprint_name)
+        if not blueprint_id and record:
+            blueprint_id = record.blueprint_id
+        if not agent_path:
+            agent_path = record.agent_path if record else None
+        if not agent_path:
+            raise RuntimeError(
+                "An agent install path is required when specifying a blueprint explicitly. "
+                "Pass --agent-install-path or rebuild the blueprint to cache its path."
+            )
+        return blueprint_id, blueprint_name, agent_path
 
     record = memory.recall()
-    if record:
+    if record and record.agent_path:
         print(f"Using cached blueprint '{record.name}' ({record.blueprint_id}).")
-        return record.blueprint_id, record.name
+        return record.blueprint_id, record.name, record.agent_path
 
-    user_input = input("No cached blueprint found. Enter a blueprint ID (bpt_...): ").strip()
-    if not user_input:
-        raise RuntimeError("A blueprint ID is required to launch a devbox.")
-    return user_input, None
+    raise RuntimeError(
+        "No cached blueprint with an agent install path is available. "
+        "Rebuild the blueprint with 'build-blueprint' or provide --blueprint-id and --agent-install-path."
+    )
 
 
 def run_remote_agent_command(args: argparse.Namespace) -> None:
     memory = BlueprintMemory()
-    blueprint_id, blueprint_name = _resolve_blueprint(args, memory)
+    blueprint_id, blueprint_name, agent_path = _resolve_blueprint(args, memory)
     repo = GitRepo.from_url(args.repo)
     repo_path = args.repo_path or f"/home/user/{repo.name}"
     api_key = ensure_api_key(os.environ.get)
@@ -77,6 +90,7 @@ def run_remote_agent_command(args: argparse.Namespace) -> None:
                 dry_run=not args.no_dry_run,
                 llm_model=args.llm_model,
                 verbose=args.verbose,
+                agent_install_path=agent_path,
             ),
         )
     finally:

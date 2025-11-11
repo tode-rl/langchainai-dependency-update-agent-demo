@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import json
+import operator
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional, TypedDict
 
-from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langgraph.graph import END, StateGraph
+from langgraph.prebuilt import ToolNode
 
 from .config import AgentSettings
 from .tools.github_repo_tool import RepoMetadata, RepoScannerTool
@@ -34,6 +36,10 @@ class DependencyUpdateResult:
     plan: Dict[str, Any]
 
 
+class AgentState(TypedDict):
+    messages: Annotated[List[BaseMessage], operator.add]
+
+
 class DependencyUpdaterAgent:
     """LangChain-powered agent that coordinates repo scanning and upgrade planning."""
 
@@ -45,10 +51,18 @@ class DependencyUpdaterAgent:
         """Analyze the repo and generate an upgrade plan."""
 
         repo_summary = self.repo_tool.describe_repo(request.repo)
-        executor = self._build_executor(request.settings, repo_summary)
+        tools = build_dependency_tools(repo_summary.repo_path)
+        llm = self._resolve_llm(request.settings).bind_tools(tools)
+        graph = self._create_graph(llm, tools)
+
         prompt_input = self._build_prompt_input(request, repo_summary)
-        raw_response = executor.invoke({"input": prompt_input})
-        plan = self._normalize_plan(raw_response.get("output", ""), repo_summary)
+        initial_messages = self._build_initial_messages(prompt_input, repo_summary)
+        final_state = graph.invoke(
+            {"messages": initial_messages},
+            config={"recursion_limit": request.settings.max_steps},
+        )
+        raw_output = self._extract_response_text(final_state.get("messages", []))
+        plan = self._normalize_plan(raw_output, repo_summary)
         report_path = self._write_report(plan, request.settings.repo_path)
         applied = [f"Generated dependency upgrade plan with {len(plan.get('upgrades', []))} suggestions."]
         return DependencyUpdateResult(
@@ -56,33 +70,6 @@ class DependencyUpdaterAgent:
             pr_branch=request.settings.branch_name,
             report_path=report_path,
             plan=plan,
-        )
-
-    def _build_executor(self, settings: AgentSettings, repo_summary: RepoMetadata) -> AgentExecutor:
-        tools = build_dependency_tools(repo_summary.repo_path)
-        llm = self._resolve_llm(settings)
-
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    (
-                        "You are a release engineering agent that proposes safe dependency upgrades for Python projects. "
-                        "Use the available tools to inspect pyproject.toml and PyPI metadata before recommending changes. "
-                        "Return JSON with keys 'upgrades' (list) and 'notes' (string). Repository context:\n{repo_snapshot}"
-                    ),
-                ),
-                ("human", "{input}"),
-                MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ]
-        ).partial(repo_snapshot=self._format_repo_snapshot(repo_summary))
-
-        agent = create_tool_calling_agent(llm, tools, prompt)
-        return AgentExecutor(
-            agent=agent,
-            tools=tools,
-            max_iterations=settings.max_steps,
-            verbose=settings.verbose,
         )
 
     def _build_prompt_input(self, request: DependencyUpdateRequest, repo_summary: RepoMetadata) -> str:
@@ -106,6 +93,40 @@ class DependencyUpdaterAgent:
             for dep in dependencies
         ]
         return json.dumps(snapshot, indent=2)
+
+    def _build_initial_messages(self, prompt_input: str, repo_summary: RepoMetadata) -> List[BaseMessage]:
+        system_prompt = (
+            "You are a release engineering agent that proposes safe dependency upgrades for Python projects. "
+            "Use the available tools to inspect pyproject.toml and PyPI metadata before recommending changes. "
+            "Return JSON with keys 'upgrades' (list) and 'notes' (string). Repository context:\n"
+            f"{self._format_repo_snapshot(repo_summary)}"
+        )
+        return [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=prompt_input),
+        ]
+
+    def _extract_response_text(self, messages: List[BaseMessage]) -> str:
+        for message in reversed(messages):
+            if isinstance(message, AIMessage):
+                content = message.content
+                if isinstance(content, str):
+                    return content
+                if isinstance(content, list):
+                    chunks: List[str] = []
+                    for part in content:
+                        if isinstance(part, dict):
+                            if part.get("type") == "tool_call":
+                                continue
+                            text = part.get("text")
+                            if text:
+                                chunks.append(text)
+                        else:
+                            chunks.append(str(part))
+                    if chunks:
+                        return "".join(chunks).strip()
+                return json.dumps(content)
+        raise RuntimeError("Agent graph did not produce a final AIMessage response.")
 
     def _normalize_plan(self, raw_output: str, repo_summary: RepoMetadata) -> Dict[str, Any]:
         try:
@@ -138,3 +159,24 @@ class DependencyUpdaterAgent:
             raise RuntimeError("OPENAI_API_KEY environment variable is required for ChatOpenAI.")
 
         return ChatOpenAI(model=model_name, temperature=0)
+
+    def _create_graph(self, llm: BaseChatModel, tools: List[Any]):
+        tool_node = ToolNode(tools)
+
+        def call_model(state: AgentState) -> AgentState:
+            response = llm.invoke(state["messages"])
+            return {"messages": [response]}
+
+        def should_continue(state: AgentState):
+            last_message = state["messages"][-1]
+            if isinstance(last_message, AIMessage) and getattr(last_message, "tool_calls", None):
+                return "tools"
+            return END
+
+        workflow = StateGraph(AgentState)
+        workflow.add_node("agent", call_model)
+        workflow.add_node("tools", tool_node)
+        workflow.set_entry_point("agent")
+        workflow.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
+        workflow.add_edge("tools", "agent")
+        return workflow.compile()

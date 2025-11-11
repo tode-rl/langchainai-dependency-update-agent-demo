@@ -14,6 +14,7 @@ class BlueprintRecord:
     name: str
     blueprint_id: str
     saved_at: str
+    agent_path: Optional[str] = None
 
 
 class BlueprintMemory:
@@ -39,16 +40,17 @@ class BlueprintMemory:
         self.state_file.write_text(json.dumps(data, indent=2))
 
     # Public API -------------------------------------------------------
-    def remember(self, name: str, blueprint_id: str) -> BlueprintRecord:
+    def remember(self, name: str, blueprint_id: str, agent_path: str | None = None) -> BlueprintRecord:
         data = self._load()
         timestamp = datetime.now(tz=timezone.utc).isoformat()
         data["blueprints"][name] = {
             "blueprint_id": blueprint_id,
             "saved_at": timestamp,
+            "agent_path": agent_path,
         }
         data["last_used_name"] = name
         self._save(data)
-        return BlueprintRecord(name=name, blueprint_id=blueprint_id, saved_at=timestamp)
+        return BlueprintRecord(name=name, blueprint_id=blueprint_id, saved_at=timestamp, agent_path=agent_path)
 
     def recall(self, name: str | None = None) -> Optional[BlueprintRecord]:
         data = self._load()
@@ -62,6 +64,7 @@ class BlueprintMemory:
             name=lookup_name,
             blueprint_id=entry["blueprint_id"],
             saved_at=entry["saved_at"],
+            agent_path=entry.get("agent_path"),
         )
 
     def forget(self, name: str) -> None:

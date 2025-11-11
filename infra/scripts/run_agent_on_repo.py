@@ -28,6 +28,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after the agent finishes.")
     parser.add_argument("--llm-model", help="Override the LLM model passed to LangChain.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose agent logging.")
+    parser.add_argument(
+        "--agent-install-path",
+        required=True,
+        help="Path inside the devbox where the agent repository lives (e.g. /home/user/langchain-dependency-agent).",
+    )
     return parser.parse_args()
 
 
@@ -55,6 +60,7 @@ def main() -> None:
                 dry_run=not args.no_dry_run,
                 llm_model=args.llm_model,
                 verbose=args.verbose,
+                agent_install_path=args.agent_install_path,
             ),
         )
     finally:

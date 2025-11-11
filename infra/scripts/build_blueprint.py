@@ -29,7 +29,8 @@ def main() -> None:
         agent_repo=repo,
         api_key=api_key,
     )
-    BlueprintMemory().remember(name=args.name, blueprint_id=blueprint_id)
+    agent_path = f"/home/user/{repo.name}"
+    BlueprintMemory().remember(name=args.name, blueprint_id=blueprint_id, agent_path=agent_path)
     print(f"Blueprint build complete. ID: {blueprint_id}")
 
 

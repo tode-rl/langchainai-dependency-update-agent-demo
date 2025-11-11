@@ -61,10 +61,10 @@ def build_agent_command(
     dry_run: bool,
     llm_model: Optional[str],
     verbose: bool,
+    agent_install_path: str,
 ) -> str:
-    parts = [
-        "langchain-deps-agent",
-        "run",
+    args = [
+        ".venv/bin/langchain-deps-agent",
         "--repo-path",
         repo_path,
         "--repo-url",
@@ -73,12 +73,14 @@ def build_agent_command(
         branch_name,
     ]
     if not dry_run:
-        parts.append("--no-dry-run")
+        args.append("--no-dry-run")
     if llm_model:
-        parts.extend(["--llm-model", llm_model])
+        args.extend(["--llm-model", llm_model])
     if verbose:
-        parts.append("--verbose")
-    return " ".join(parts)
+        args.append("--verbose")
+    command = " ".join(shlex.quote(part) for part in args)
+    agent_dir = shlex.quote(agent_install_path)
+    return f"cd {agent_dir} && {command}"
 
 
 def stream_execution_logs(logs: Iterable[str]) -> None:

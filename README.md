@@ -34,6 +34,9 @@ uv run python main.py build-blueprint --name dependency-updater --agent-repo tod
 
 # Launch the agent remotely via the CLI wrapper
 uv run python main.py run-remote-agent --repo https://github.com/org/project
+
+# Run the agent locally against a checked-out repo (repo URL optional)
+uv run langchain-deps-agent --repo-path /path/to/repo
 ```
 
 ### Next Steps

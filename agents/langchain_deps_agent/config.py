@@ -16,7 +16,7 @@ class AgentSettings(BaseModel):
     )
     max_steps: int = Field(
         default=25,
-        description="Maximum LangChain planner steps to take before aborting.",
+        description="Maximum reasoning steps (graph recursion limit) before aborting.",
     )
     verbose: bool = Field(
         default=False,
