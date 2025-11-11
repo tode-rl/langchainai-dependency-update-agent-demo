@@ -10,7 +10,13 @@ This package contains the LangChain-based agent that inspects a mounted reposito
 
 ### Development
 
-```bash
-uv pip install -e .
-langchain-deps-agent --repo-path /mnt/repo --config ./config.example.yaml
-```
+1. From the repo root, make sure `.venv` exists (`uv venv && source .venv/bin/activate`). Installing the workspace dependencies from the root ensures VSCode sees a single interpreter.
+2. Install this package in editable mode (VSCode terminals inherit the interpreter you selected in the root README instructions):
+   ```bash
+   uv pip install -e agents/langchain-deps
+   ```
+3. Open the `agents/langchain-deps` folder in VSCode (or use a multi-root workspace) and confirm **Python: Select Interpreter** is still pointing at `<repo>/.venv/bin/python`. The language server will now resolve the agent modules and tests without extra configuration.
+4. Run the CLI locally:
+   ```bash
+   uv run langchain-deps-agent --repo-path /mnt/repo --config ./config.example.yaml
+   ```

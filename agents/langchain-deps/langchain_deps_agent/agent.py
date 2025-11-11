@@ -131,7 +131,7 @@ class DependencyUpdaterAgent:
         if self._llm:
             return self._llm
 
-        model_name = settings.llm_model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        model_name = settings.llm_model or os.getenv("OPENAI_MODEL", "gpt-5-mini")
         try:
             from langchain_openai import ChatOpenAI
         except ImportError as exc:  # pragma: no cover - import guard

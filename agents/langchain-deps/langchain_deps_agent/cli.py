@@ -22,7 +22,7 @@ def run(
     repo_url: Optional[str] = typer.Option(None, "--repo-url", help="Original GitHub repository URL."),
     branch_name: str = typer.Option("runloop/dependency-updates", "--branch-name", help="Branch to push changes to."),
     dry_run: bool = typer.Option(True, "--dry-run/--no-dry-run", help="Disable pushes for local testing."),
-    llm_model: Optional[str] = typer.Option(None, "--llm-model", help="Chat model for LangChain (defaults to gpt-4o-mini)."),
+    llm_model: Optional[str] = typer.Option(None, "--llm-model", help="Chat model for LangChain (defaults to gpt-5-mini)."),
     verbose: bool = typer.Option(False, "--verbose/--quiet", help="Toggle verbose LangChain logging."),
 ) -> None:
     """Entry point invoked inside the Runloop devbox."""

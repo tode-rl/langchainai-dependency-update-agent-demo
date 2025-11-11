@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Mono-repo for a LangChain dependency updater agent and Runloop blueprint tooling."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "runloop_api_client>=0.66.1",
+]
 
 [tool.uv.workspace]
 members = [

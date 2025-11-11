@@ -32,7 +32,7 @@ class AgentSettings(BaseModel):
     )
     llm_model: Optional[str] = Field(
         default=None,
-        description="Chat model identifier passed to LangChain (defaults to gpt-4o-mini if unset).",
+        description="Chat model identifier passed to LangChain (defaults to gpt-5-mini if unset).",
     )
 
 
