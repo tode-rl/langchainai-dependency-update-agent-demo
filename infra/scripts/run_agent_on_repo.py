@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--devbox-name", help="Optional devbox name override.")
     parser.add_argument("--repo-path", help="Override the repo path inside the devbox (default /home/user/<repo>).")
     parser.add_argument("--no-dry-run", action="store_true", help="Allow the agent to push changes.")
-    parser.add_argument("--keep", action="store_true", help="Keep the devbox running after the agent finishes.")
+    parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after the agent finishes.")
     parser.add_argument("--llm-model", help="Override the LLM model passed to LangChain.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose agent logging.")
     return parser.parse_args()
@@ -58,8 +58,10 @@ def main() -> None:
             ),
         )
     finally:
-        if not args.keep:
+        if args.cleanup:
             shutdown_devbox(client, devbox_id)
+        else:
+            print(f"Devbox {devbox_id} left running (pass --cleanup to shut it down automatically).")
 
 
 if __name__ == "__main__":

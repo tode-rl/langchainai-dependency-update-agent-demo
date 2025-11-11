@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import sys
 import uuid
 from dataclasses import dataclass
@@ -17,7 +18,7 @@ class GitRepo:
 
     @classmethod
     def from_url(cls, url: str) -> "GitRepo":
-        pattern = re.compile(r"(?:github\\.com[:/])(?P<owner>[\\w.-]+)/(?P<name>[\\w.-]+)(?:\\.git)?")
+        pattern = re.compile(r"(?:github\.com[:/])(?P<owner>[\w.-]+)/(?P<name>[\w.-]+)(?:\.git)?")
         match = pattern.search(url)
         if not match:
             raise ValueError(f"Unable to parse GitHub URL: {url}")
@@ -44,10 +45,11 @@ def create_devbox(
         "name": devbox_name or f"deps-agent-{uuid.uuid4().hex[:8]}",
         "code_mounts": [CodeMountParameters(repo_owner=repo.owner, repo_name=repo.name)],
     }
-    if blueprint_id:
-        params["blueprint_id"] = blueprint_id
     if blueprint_name:
         params["blueprint_name"] = blueprint_name
+    elif blueprint_id:
+        params["blueprint_id"] = blueprint_id
+
     devbox = client.devboxes.create_and_await_running(**params)
     return devbox.id
 

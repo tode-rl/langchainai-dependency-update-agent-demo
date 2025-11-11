@@ -80,8 +80,10 @@ def run_remote_agent_command(args: argparse.Namespace) -> None:
             ),
         )
     finally:
-        if not args.keep:
+        if args.cleanup:
             shutdown_devbox(client, devbox_id)
+        else:
+            print(f"Devbox {devbox_id} left running (pass --cleanup to shut it down automatically).")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -107,8 +109,12 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--devbox-name", help="Optional devbox name override.")
     run_parser.add_argument("--repo-path", help="Override repo path inside the devbox.")
     run_parser.add_argument("--llm-model", help="LLM model override for the agent.")
+    run_parser.add_argument(
+        "--agent-install-path",
+        help="Path inside the devbox where the agent repository is installed (defaults to cached blueprint metadata).",
+    )
     run_parser.add_argument("--no-dry-run", action="store_true", help="Allow the agent to push changes.")
-    run_parser.add_argument("--keep", action="store_true", help="Keep the devbox running after execution.")
+    run_parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after execution.")
     run_parser.add_argument("--verbose", action="store_true", help="Enable verbose agent logging.")
     run_parser.set_defaults(func=run_remote_agent_command)
 

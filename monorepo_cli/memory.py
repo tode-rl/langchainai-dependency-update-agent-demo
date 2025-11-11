@@ -42,7 +42,10 @@ class BlueprintMemory:
     def remember(self, name: str, blueprint_id: str) -> BlueprintRecord:
         data = self._load()
         timestamp = datetime.now(tz=timezone.utc).isoformat()
-        data["blueprints"][name] = {"blueprint_id": blueprint_id, "saved_at": timestamp}
+        data["blueprints"][name] = {
+            "blueprint_id": blueprint_id,
+            "saved_at": timestamp,
+        }
         data["last_used_name"] = name
         self._save(data)
         return BlueprintRecord(name=name, blueprint_id=blueprint_id, saved_at=timestamp)
@@ -56,7 +59,9 @@ class BlueprintMemory:
         if not entry:
             return None
         return BlueprintRecord(
-            name=lookup_name, blueprint_id=entry["blueprint_id"], saved_at=entry["saved_at"]
+            name=lookup_name,
+            blueprint_id=entry["blueprint_id"],
+            saved_at=entry["saved_at"],
         )
 
     def forget(self, name: str) -> None:
