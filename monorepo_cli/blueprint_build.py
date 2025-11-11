@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from runloop_api_client import Runloop
-from runloop_api_client.types.shared.launch_parameters import LaunchParameters, UserParameters
+from runloop_api_client.types.shared.launch_parameters import (
+    LaunchParameters,
+    UserParameters,
+)
 
 
 @dataclass

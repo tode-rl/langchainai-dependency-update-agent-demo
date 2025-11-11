@@ -40,7 +40,9 @@ def _resolve_blueprint(args: argparse.Namespace, memory: BlueprintMemory):
     if blueprint_name:
         record = memory.recall(blueprint_name)
         if not record:
-            raise RuntimeError(f"No cached blueprint named '{blueprint_name}' was found.")
+            raise RuntimeError(
+                f"No cached blueprint named '{blueprint_name}' was found."
+            )
         if not blueprint_id:
             blueprint_id = record.blueprint_id
     elif not blueprint_id:
@@ -91,15 +93,21 @@ def run_remote_agent_command(args: argparse.Namespace) -> None:
         if args.cleanup:
             shutdown_devbox(client, devbox_id)
         else:
-            print(f"Devbox {devbox_id} left running (pass --cleanup to shut it down automatically).")
+            print(
+                f"Devbox {devbox_id} left running (pass --cleanup to shut it down automatically)."
+            )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="LangChain dependency agent toolbox.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    build_parser = subparsers.add_parser("build-blueprint", help="Build and cache a Runloop blueprint for the agent.")
-    build_parser.add_argument("--name", required=True, help="Blueprint name, e.g. dependency-updater.")
+    build_parser = subparsers.add_parser(
+        "build-blueprint", help="Build and cache a Runloop blueprint for the agent."
+    )
+    build_parser.add_argument(
+        "--name", required=True, help="Blueprint name, e.g. dependency-updater."
+    )
     build_parser.add_argument(
         "--agent-repo",
         required=True,
@@ -108,18 +116,31 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser.set_defaults(func=build_blueprint_command)
 
     run_parser = subparsers.add_parser(
-        "run-remote-agent", help="Launch a devbox from a blueprint and stream the agent output."
+        "run-remote-agent",
+        help="Launch a devbox from a blueprint and stream the agent output.",
     )
-    run_parser.add_argument("--repo", required=True, help="GitHub repository URL to mount.")
-    run_parser.add_argument("--branch-name", default="runloop/dependency-updates", help="Branch to push updates to.")
+    run_parser.add_argument(
+        "--repo", required=True, help="GitHub repository URL to mount."
+    )
+    run_parser.add_argument(
+        "--branch-name",
+        default="runloop/dependency-updates",
+        help="Branch to push updates to.",
+    )
     run_parser.add_argument("--blueprint-name", help="Blueprint name override.")
     run_parser.add_argument("--blueprint-id", help="Explicit blueprint ID override.")
     run_parser.add_argument("--devbox-name", help="Optional devbox name override.")
     run_parser.add_argument("--repo-path", help="Override repo path inside the devbox.")
     run_parser.add_argument("--llm-model", help="LLM model override for the agent.")
-    run_parser.add_argument("--no-dry-run", action="store_true", help="Allow the agent to push changes.")
-    run_parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after execution.")
-    run_parser.add_argument("--quiet", action="store_true", help="Suppress streaming agent logs.")
+    run_parser.add_argument(
+        "--no-dry-run", action="store_true", help="Allow the agent to push changes."
+    )
+    run_parser.add_argument(
+        "--cleanup", action="store_true", help="Shutdown the devbox after execution."
+    )
+    run_parser.add_argument(
+        "--quiet", action="store_true", help="Suppress streaming agent logs."
+    )
     run_parser.set_defaults(func=run_remote_agent_command)
 
     return parser

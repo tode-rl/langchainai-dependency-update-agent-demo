@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from runloop_api_client import Runloop
-from runloop_api_client.types.shared_params.code_mount_parameters import CodeMountParameters
+from runloop_api_client.types.shared_params.code_mount_parameters import (
+    CodeMountParameters,
+)
 
 
 @dataclass
@@ -18,7 +20,9 @@ class GitRepo:
 
     @classmethod
     def from_url(cls, url: str) -> "GitRepo":
-        pattern = re.compile(r"(?:github\.com[:/])(?P<owner>[\w.-]+)/(?P<name>[\w.-]+)(?:\.git)?")
+        pattern = re.compile(
+            r"(?:github\.com[:/])(?P<owner>[\w.-]+)/(?P<name>[\w.-]+)(?:\.git)?"
+        )
         match = pattern.search(url)
         if not match:
             raise ValueError(f"Unable to parse GitHub URL: {url}")
@@ -43,7 +47,9 @@ def create_devbox(
         raise ValueError("Either blueprint_id or blueprint_name must be provided.")
     params = {
         "name": devbox_name or f"deps-agent-{uuid.uuid4().hex[:8]}",
-        "code_mounts": [CodeMountParameters(repo_owner=repo.owner, repo_name=repo.name)],
+        "code_mounts": [
+            CodeMountParameters(repo_owner=repo.owner, repo_name=repo.name)
+        ],
     }
     if blueprint_name:
         params["blueprint_name"] = blueprint_name

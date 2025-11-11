@@ -4,8 +4,8 @@ requires-python = ">=3.12"
 
 [manifest]
 members = [
-    "langchain-deps-agent",
     "langchainai-dependency-update-agent",
+    "langgraph-agents",
     "runloop-infra-tools",
 ]
 
@@ -296,35 +296,6 @@ wheels = [
 ]
 
 [[package]]
-name = "langchain-deps-agent"
-version = "0.1.0"
-source = { editable = "agents" }
-dependencies = [
-    { name = "httpx" },
-    { name = "langchain" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "packaging" },
-    { name = "pydantic" },
-    { name = "rich" },
-    { name = "ruff" },
-    { name = "typer" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "langchain", specifier = ">=1.0.5" },
-    { name = "langchain-openai", specifier = ">=1.0.2" },
-    { name = "langgraph", specifier = ">=1.0.3" },
-    { name = "packaging", specifier = ">=25.0" },
-    { name = "pydantic", specifier = ">=2.12.4" },
-    { name = "rich", specifier = ">=14.2.0" },
-    { name = "ruff", specifier = ">=0.8.0" },
-    { name = "typer", specifier = ">=0.20.0" },
-]
-
-[[package]]
 name = "langchain-openai"
 version = "1.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -364,6 +335,35 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a7/55/70f2d11d33b0310d3e48d8e049825b4a34a1c822d48f6448ae548d2cd0f8/langgraph-1.0.3.tar.gz", hash = "sha256:873a6aae6be054ef52a05c463be363a46da9711405b1b14454d595f543b68335", size = 483302, upload_time = "2025-11-10T17:41:45.425Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/84/a3/fdf6ecd0e44cb02d20afe7d0fb64c748a749f4b2e011bf9a785a32642367/langgraph-1.0.3-py3-none-any.whl", hash = "sha256:4a75146f09bd0d127a724876f4244f460c4c66353a993641bd641ed710cd010f", size = 156845, upload_time = "2025-11-10T17:41:43.868Z" },
+]
+
+[[package]]
+name = "langgraph-agents"
+version = "0.1.0"
+source = { editable = "agents" }
+dependencies = [
+    { name = "httpx" },
+    { name = "langchain" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+    { name = "packaging" },
+    { name = "pydantic" },
+    { name = "rich" },
+    { name = "ruff" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "langchain", specifier = ">=1.0.5" },
+    { name = "langchain-openai", specifier = ">=1.0.2" },
+    { name = "langgraph", specifier = ">=1.0.3" },
+    { name = "packaging", specifier = ">=25.0" },
+    { name = "pydantic", specifier = ">=2.12.4" },
+    { name = "rich", specifier = ">=14.2.0" },
+    { name = "ruff", specifier = ">=0.8.0" },
+    { name = "typer", specifier = ">=0.20.0" },
 ]
 
 [[package]]

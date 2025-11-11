@@ -1,5 +1,5 @@
 [project]
-name = "langchain-deps-agent"
+name = "langgraph-agents"
 version = "0.1.0"
 description = "LangChain toolchain that updates project dependencies inside a Runloop devbox."
 readme = "README.md"

@@ -1,4 +1,4 @@
-import Runloop, { type Stream } from '@runloop/api-client';
+import Runloop from '@runloop/api-client';
 
 export const runtime = 'nodejs';
 
@@ -6,6 +6,7 @@ const AGENT_OPTIONS = new Set(['langchain-deps-agent', 'langchain-lint-agent']);
 const MODEL_NAME = 'gpt-5-mini';
 const BLUEPRINT_NAME = 'dependency-updater';
 const DEFAULT_BRANCH = 'runloop/dependency-updates';
+const AGENT_INSTALL_PATH = '/home/user/langchainai-dependency-update-agent-demo';
 
 type StreamEvent =
   | { type: 'status'; message: string }
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
       };
 
       let devboxId: string | undefined;
+      let hadError = false;
 
       try {
         send({ type: 'status', message: 'Provisioning devbox...' });
@@ -94,7 +96,6 @@ export async function POST(request: Request) {
         const command = buildAgentCommand({
           agent,
           repoPath,
-          repoUrl,
           model,
         });
 
@@ -106,25 +107,24 @@ export async function POST(request: Request) {
 
         send({ type: 'status', message: 'Agent execution started.' });
 
-        const stdoutStream = await client.devboxes.executions.streamStdoutUpdates(devbox.id, execution.id);
+        const stdoutStream = await client.devboxes.executions.streamStdoutUpdates(devbox.id, execution.execution_id);
         await forwardLogs(stdoutStream, send);
 
-        const completed = await client.devboxes.executions.awaitCompleted(devbox.id, execution.id);
+        const completed = await client.devboxes.executions.awaitCompleted(devbox.id, execution.execution_id);
         send({
           type: 'status',
-          message: `Execution finished with exit code ${completed.exit_code ?? 'unknown'}.`,
+          message: `Execution finished with exit status ${completed.exit_status ?? 'unknown'}.`,
         });
       } catch (error) {
+        hadError = true;
         console.error('Failed to run agent', error);
         send({ type: 'error', message: formatError(error) });
       } finally {
-        if (client && devboxId) {
-          try {
-            await client.devboxes.shutdown(devboxId);
-            send({ type: 'status', message: `Devbox ${devboxId} shut down.` });
-          } catch (shutdownError) {
-            console.warn('Failed to shut down devbox', shutdownError);
-          }
+        if (devboxId) {
+          const message = hadError
+            ? `Devbox ${devboxId} left running for debugging (manual shutdown required).`
+            : `Devbox ${devboxId} left running for inspection. Remember to shut it down manually when done.`;
+          send({ type: 'status', message });
         }
         send({ type: 'done' });
         controller.close();
@@ -156,12 +156,10 @@ function parseGitHubRepo(url: string): ParsedRepo {
 function buildAgentCommand({
   agent,
   repoPath,
-  repoUrl,
   model,
 }: {
   agent: string;
   repoPath: string;
-  repoUrl: string;
   model: string;
 }): string {
   const args = [
@@ -170,14 +168,13 @@ function buildAgentCommand({
     agent,
     '--repo-path',
     repoPath,
-    '--repo-url',
-    repoUrl,
     '--branch-name',
     DEFAULT_BRANCH,
     '--llm-model',
     model,
   ];
-  return args.map(shellQuote).join(' ');
+  const command = args.map(shellQuote).join(' ');
+  return `cd ${shellQuote(AGENT_INSTALL_PATH)} && ${command}`;
 }
 
 function shellQuote(value: string): string {
@@ -197,7 +194,7 @@ function formatError(error: unknown): string {
   return 'Unknown error';
 }
 
-async function forwardLogs(stream: Stream<{ output: string }> , send: (event: StreamEvent) => void) {
+async function forwardLogs(stream: AsyncIterable<{ output: string }> , send: (event: StreamEvent) => void) {
   for await (const chunk of stream) {
     if (chunk?.output) {
       send({ type: 'chunk', data: chunk.output });

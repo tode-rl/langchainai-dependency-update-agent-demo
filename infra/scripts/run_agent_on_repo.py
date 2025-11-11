@@ -18,17 +18,42 @@ from monorepo_cli.devbox_runner import (
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the dependency updater agent inside a Runloop devbox.")
-    parser.add_argument("--repo", required=True, help="GitHub repository URL to mount, e.g. https://github.com/org/project")
-    parser.add_argument("--branch-name", default="runloop/dependency-updates", help="Target branch for changes.")
-    parser.add_argument("--blueprint-name", help="Blueprint name to launch devboxes from.")
+    parser = argparse.ArgumentParser(
+        description="Run the dependency updater agent inside a Runloop devbox."
+    )
+    parser.add_argument(
+        "--repo",
+        required=True,
+        help="GitHub repository URL to mount, e.g. https://github.com/org/project",
+    )
+    parser.add_argument(
+        "--branch-name",
+        default="runloop/dependency-updates",
+        help="Target branch for changes.",
+    )
+    parser.add_argument(
+        "--blueprint-name", help="Blueprint name to launch devboxes from."
+    )
     parser.add_argument("--blueprint-id", help="Explicit blueprint ID to use.")
     parser.add_argument("--devbox-name", help="Optional devbox name override.")
-    parser.add_argument("--repo-path", help="Override the repo path inside the devbox (default /home/user/<repo>).")
-    parser.add_argument("--no-dry-run", action="store_true", help="Allow the agent to push changes.")
-    parser.add_argument("--cleanup", action="store_true", help="Shutdown the devbox after the agent finishes.")
-    parser.add_argument("--llm-model", help="Override the LLM model passed to LangChain.")
-    parser.add_argument("--quiet", action="store_true", help="Suppress streaming agent logs.")
+    parser.add_argument(
+        "--repo-path",
+        help="Override the repo path inside the devbox (default /home/user/<repo>).",
+    )
+    parser.add_argument(
+        "--no-dry-run", action="store_true", help="Allow the agent to push changes."
+    )
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="Shutdown the devbox after the agent finishes.",
+    )
+    parser.add_argument(
+        "--llm-model", help="Override the LLM model passed to LangChain."
+    )
+    parser.add_argument(
+        "--quiet", action="store_true", help="Suppress streaming agent logs."
+    )
     return parser.parse_args()
 
 
@@ -63,7 +88,9 @@ def main() -> None:
         if args.cleanup:
             shutdown_devbox(client, devbox_id)
         else:
-            print(f"Devbox {devbox_id} left running (pass --cleanup to shut it down automatically).")
+            print(
+                f"Devbox {devbox_id} left running (pass --cleanup to shut it down automatically)."
+            )
 
 
 if __name__ == "__main__":
