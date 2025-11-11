@@ -43,7 +43,9 @@ class AgentState(TypedDict):
 class DependencyUpdaterAgent:
     """LangChain-powered agent that coordinates repo scanning and upgrade planning."""
 
-    def __init__(self, repo_tool: RepoScannerTool, llm: Optional[BaseChatModel] = None) -> None:
+    def __init__(
+        self, repo_tool: RepoScannerTool, llm: Optional[BaseChatModel] = None
+    ) -> None:
         self.repo_tool = repo_tool
         self._llm = llm
 
@@ -71,9 +73,14 @@ class DependencyUpdaterAgent:
         raw_output = self._extract_response_text(final_state.get("messages", []))
         plan = self._normalize_plan(raw_output, repo_summary)
         report_path = self._write_report(plan, request.settings.repo_path)
-        applied = [f"Generated dependency upgrade plan with {len(plan.get('upgrades', []))} suggestions."]
+        applied = [
+            f"Generated dependency upgrade plan with {len(plan.get('upgrades', []))} suggestions."
+        ]
         if request.settings.verbose:
-            self._log("agent", f"Plan generated with {len(plan.get('upgrades', []))} suggestions.")
+            self._log(
+                "agent",
+                f"Plan generated with {len(plan.get('upgrades', []))} suggestions.",
+            )
         return DependencyUpdateResult(
             applied_changes=applied,
             pr_branch=request.settings.branch_name,
@@ -81,7 +88,9 @@ class DependencyUpdaterAgent:
             plan=plan,
         )
 
-    def _build_prompt_input(self, request: DependencyUpdateRequest, repo_summary: RepoMetadata) -> str:
+    def _build_prompt_input(
+        self, request: DependencyUpdateRequest, repo_summary: RepoMetadata
+    ) -> str:
         repo_path = request.settings.repo_path
         return (
             "Analyze the Python dependencies declared in the repository located at "
@@ -103,7 +112,9 @@ class DependencyUpdaterAgent:
         ]
         return json.dumps(snapshot, indent=2)
 
-    def _build_initial_messages(self, prompt_input: str, repo_summary: RepoMetadata) -> List[BaseMessage]:
+    def _build_initial_messages(
+        self, prompt_input: str, repo_summary: RepoMetadata
+    ) -> List[BaseMessage]:
         system_prompt = (
             "You are a release engineering agent that proposes safe dependency upgrades for Python projects. "
             "Use the available tools to inspect pyproject.toml and PyPI metadata before recommending changes. "
@@ -121,7 +132,9 @@ class DependencyUpdaterAgent:
                 return self._render_message_content(message.content)
         raise RuntimeError("Agent graph did not produce a final AIMessage response.")
 
-    def _normalize_plan(self, raw_output: str, repo_summary: RepoMetadata) -> Dict[str, Any]:
+    def _normalize_plan(
+        self, raw_output: str, repo_summary: RepoMetadata
+    ) -> Dict[str, Any]:
         try:
             plan = json.loads(raw_output)
             if isinstance(plan, dict):
@@ -147,11 +160,15 @@ class DependencyUpdaterAgent:
         model_name = settings.llm_model or os.getenv("OPENAI_MODEL", "gpt-5-mini")
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise RuntimeError("OPENAI_API_KEY environment variable is required for ChatOpenAI.")
+            raise RuntimeError(
+                "OPENAI_API_KEY environment variable is required for ChatOpenAI."
+            )
 
         return ChatOpenAI(model=model_name, temperature=0)
 
-    def _create_graph(self, llm: BaseChatModel, tools: List[Any], verbose: bool = False):
+    def _create_graph(
+        self, llm: BaseChatModel, tools: List[Any], verbose: bool = False
+    ):
         tool_node = ToolNode(tools)
 
         def call_model(state: AgentState) -> AgentState:
@@ -171,13 +188,19 @@ class DependencyUpdaterAgent:
             result = tool_node.invoke(state)
             if verbose:
                 message = result["messages"][-1]
-                label = getattr(message, "name", None) or getattr(message, "tool_call_id", "tool")
-                self._log(f"tool:{label}", self._render_message_content(message.content))
+                label = getattr(message, "name", None) or getattr(
+                    message, "tool_call_id", "tool"
+                )
+                self._log(
+                    f"tool:{label}", self._render_message_content(message.content)
+                )
             return result
 
         def should_continue(state: AgentState):
             last_message = state["messages"][-1]
-            if isinstance(last_message, AIMessage) and getattr(last_message, "tool_calls", None):
+            if isinstance(last_message, AIMessage) and getattr(
+                last_message, "tool_calls", None
+            ):
                 return "tools"
             return END
 
@@ -185,7 +208,9 @@ class DependencyUpdaterAgent:
         workflow.add_node("agent", call_model)
         workflow.add_node("tools", invoke_tools)
         workflow.set_entry_point("agent")
-        workflow.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
+        workflow.add_conditional_edges(
+            "agent", should_continue, {"tools": "tools", END: END}
+        )
         workflow.add_edge("tools", "agent")
         return workflow.compile()
 

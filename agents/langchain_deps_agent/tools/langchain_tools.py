@@ -36,7 +36,11 @@ def build_dependency_tools(repo_path: Path) -> List[StructuredTool]:
         metadata = repo_scanner.describe_repo(repo_metadata)
         dependencies = metadata.dependencies or []
         if not include_optional:
-            dependencies = [d for d in dependencies if not d.source or not d.source.startswith("optional:")]
+            dependencies = [
+                d
+                for d in dependencies
+                if not d.source or not d.source.startswith("optional:")
+            ]
         payload = [
             {
                 "name": dep.name,

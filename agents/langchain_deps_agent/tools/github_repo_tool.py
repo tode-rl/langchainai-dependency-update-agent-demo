@@ -40,7 +40,11 @@ class RepoMetadata:
 class RepoScannerTool:
     """Inspect a Python repository for dependency manifests and metadata."""
 
-    def __init__(self, manifests: list[str] | None = None, http_client: httpx.Client | None = None) -> None:
+    def __init__(
+        self,
+        manifests: list[str] | None = None,
+        http_client: httpx.Client | None = None,
+    ) -> None:
         self.manifests = manifests or ["pyproject.toml"]
         self.http_client = http_client or httpx.Client(timeout=10)
 
@@ -88,7 +92,9 @@ class RepoScannerTool:
 
         spec = str(requirement.specifier) or "*"
         latest = self._fetch_latest_version(requirement.name)
-        return DependencyInfo(name=requirement.name, spec=spec, latest_version=latest, source=source)
+        return DependencyInfo(
+            name=requirement.name, spec=spec, latest_version=latest, source=source
+        )
 
     def _fetch_latest_version(self, package: str) -> Optional[str]:
         url = f"https://pypi.org/pypi/{package}/json"

@@ -6,14 +6,12 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class AgentSettings(BaseModel):
-    """Runtime configuration for the dependency updater agent."""
+class LintAgentSettings(BaseModel):
+    """Runtime configuration for the linting agent."""
 
-    repo_path: Path = Field(
-        ..., description="Path to the mounted repository to update."
-    )
+    repo_path: Path = Field(..., description="Path to the repository to lint.")
     branch_name: str = Field(
-        default="runloop/dependency-updates",
+        default="runloop/lint-fixes",
         description="Branch to create or fast-forward when committing changes.",
     )
     max_steps: int = Field(
@@ -28,9 +26,13 @@ class AgentSettings(BaseModel):
         default=True,
         description="When true, skip committing or pushing changes.",
     )
-    github_token_env: Optional[str] = Field(
-        default="GITHUB_TOKEN",
-        description="Environment variable that holds a GitHub token, if available.",
+    auto_fix: bool = Field(
+        default=True,
+        description="Automatically fix safe linting issues using ruff --fix.",
+    )
+    format_code: bool = Field(
+        default=True,
+        description="Apply code formatting using ruff format.",
     )
     llm_model: Optional[str] = Field(
         default=None,
@@ -38,9 +40,9 @@ class AgentSettings(BaseModel):
     )
 
 
-def load_settings(repo_path: str | Path, **overrides: object) -> AgentSettings:
-    """Create an AgentSettings instance with optional overrides."""
+def load_settings(repo_path: str | Path, **overrides: object) -> LintAgentSettings:
+    """Create a LintAgentSettings instance with optional overrides."""
 
     payload = {"repo_path": Path(repo_path)}
     payload.update(overrides)
-    return AgentSettings(**payload)
+    return LintAgentSettings(**payload)
