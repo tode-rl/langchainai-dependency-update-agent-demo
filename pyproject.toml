@@ -1,0 +1,13 @@
+[project]
+name = "langchainai-dependency-update-agent"
+version = "0.1.0"
+description = "Mono-repo for a LangChain dependency updater agent and Runloop blueprint tooling."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "agents/langchain-deps",
+    "infra/runloop-blueprint",
+]

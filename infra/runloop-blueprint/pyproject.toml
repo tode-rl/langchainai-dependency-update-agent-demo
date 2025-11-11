@@ -1,0 +1,13 @@
+[project]
+name = "runloop-blueprint-tools"
+version = "0.1.0"
+description = "Utilities for building Runloop blueprints and running the LangChain dependency agent."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "runloop_api_client>=0.66.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
