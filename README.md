@@ -30,7 +30,7 @@ See the sub-directory READMEs for per-package commands that work seamlessly once
 uv run pytest agents/langchain-deps/tests
 
 # Build or update the Runloop blueprint
-uv run python infra/runloop-blueprint/build_blueprint.py --name dependency-updater --agent-repo langchainai/dependency-agent
+uv run python infra/runloop-blueprint/build_blueprint.py --name dependency-updater --agent-repo tode-rl/langchainai-dependency-update-agent-demo
 
 # Launch the agent remotely via the CLI wrapper
 uv run python main.py run-remote-agent --repo https://github.com/org/project

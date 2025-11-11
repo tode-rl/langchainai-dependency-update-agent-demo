@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from textwrap import dedent
 
 from runloop_api_client import Runloop
+from runloop_api_client.types.shared.launch_parameters import LaunchParameters, UserParameters
 
 
 @dataclass
@@ -19,35 +19,28 @@ class RepoSlug:
         return cls(owner=owner, name=name)
 
 
-def render_setup_script(agent_repo: RepoSlug, install_command: str) -> str:
+def render_setup_script(agent_repo: RepoSlug) -> list[str]:
     repo_url = f"https://github.com/{agent_repo.owner}/{agent_repo.name}.git"
-    target_dir = f"/home/user/src/{agent_repo.name}"
-    return dedent(
-        f"""
-        set -euo pipefail
-        export PATH="$HOME/.local/bin:$PATH"
-        mkdir -p /home/user/src
-        if ! command -v uv >/dev/null 2>&1; then
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-        fi
-        rm -rf "{target_dir}"
-        git clone "{repo_url}" "{target_dir}"
-        cd "{target_dir}"
-        {install_command}
-        """
-    ).strip()
+    target_dir = f"/home/user/{agent_repo.name}"
+    return [
+        "wget -qO- https://astral.sh/uv/install.sh | sh",
+        f'git clone "{repo_url}" "{target_dir}"',
+        f'cd "{target_dir}" && uv sync',
+    ]
 
 
-def build_blueprint(name: str, agent_repo: RepoSlug, api_key: str, install_command: str) -> str:
+def build_blueprint(name: str, agent_repo: RepoSlug, api_key: str) -> str:
     client = Runloop(bearer_token=api_key)
-    setup_script = render_setup_script(agent_repo, install_command)
+    setup_script = render_setup_script(agent_repo)
     blueprint = client.blueprints.create_and_await_build_complete(
         name=name,
-        system_setup_commands=[setup_script],
-        metadata={
-            "agent_repo": f"{agent_repo.owner}/{agent_repo.name}",
-            "install_command": install_command,
-        },
+        system_setup_commands=setup_script,
+        launch_parameters=LaunchParameters(
+            user_parameters=UserParameters(
+                uid=0,
+                username="root",
+            )
+        ),
     )
     return blueprint.id
 

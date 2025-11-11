@@ -14,11 +14,6 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="GitHub slug containing the agent code, e.g. langchainai/dependency-agent.",
     )
-    parser.add_argument(
-        "--install-command",
-        default="uv pip install -e .",
-        help="Command executed in the agent repo to install the package.",
-    )
     return parser.parse_args()
 
 
@@ -32,7 +27,6 @@ def main() -> None:
         name=args.name,
         agent_repo=repo,
         api_key=api_key,
-        install_command=args.install_command,
     )
     BlueprintMemory().remember(name=args.name, blueprint_id=blueprint_id)
     print(f"Blueprint build complete. ID: {blueprint_id}")

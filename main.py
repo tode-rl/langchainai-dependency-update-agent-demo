@@ -24,7 +24,6 @@ def build_blueprint_command(args: argparse.Namespace) -> None:
         name=args.name,
         agent_repo=repo,
         api_key=api_key,
-        install_command=args.install_command,
     )
     record = BlueprintMemory().remember(args.name, blueprint_id)
     print(
@@ -95,11 +94,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--agent-repo",
         required=True,
         help="GitHub slug containing the agent code, e.g. langchainai/dependency-agent.",
-    )
-    build_parser.add_argument(
-        "--install-command",
-        default="uv pip install -e .",
-        help="Command executed in the agent repo to install the package.",
     )
     build_parser.set_defaults(func=build_blueprint_command)
 

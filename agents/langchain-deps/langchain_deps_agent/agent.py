@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from .config import AgentSettings
@@ -132,13 +133,6 @@ class DependencyUpdaterAgent:
             return self._llm
 
         model_name = settings.llm_model or os.getenv("OPENAI_MODEL", "gpt-5-mini")
-        try:
-            from langchain_openai import ChatOpenAI
-        except ImportError as exc:  # pragma: no cover - import guard
-            raise RuntimeError(
-                "langchain-openai must be installed to run the dependency updater agent."
-            ) from exc
-
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY environment variable is required for ChatOpenAI.")
