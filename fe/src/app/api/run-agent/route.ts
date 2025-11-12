@@ -87,6 +87,12 @@ export async function POST(request: Request) {
             },
           ],
           name: `fe-session-${parsedRepo.name}`.slice(0, 63),
+          launch_parameters: {
+            user_parameters: {
+              uid: 4444,
+              username: 'user',
+            }
+          }
         });
         devboxId = devbox.id;
 

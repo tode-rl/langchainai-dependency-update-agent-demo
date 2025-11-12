@@ -1,13 +1,11 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
-
 from runloop_api_client import Runloop
 from runloop_api_client.types.shared.launch_parameters import (
     LaunchParameters,
     UserParameters,
 )
-
+import os
 
 @dataclass
 class RepoSlug:
@@ -28,7 +26,9 @@ def render_setup_script(agent_repo: RepoSlug) -> list[str]:
     return [
         "wget -qO- https://astral.sh/uv/install.sh | sh",
         f'git clone "{repo_url}" "{target_dir}"',
-        f'cd "{target_dir}" && uv sync',
+        f'cd "{target_dir}" && uv sync && uv pip install -e agents -e infra',
+        f'echo "export OPENAI_API_KEY={os.environ.get("OPENAI_API_KEY", "")}" >> /home/user/.bashrc',
+        f'echo "export OPENAI_API_KEY={os.environ.get("OPENAI_API_KEY", "")}" >> /root/.bashrc',
     ]
 
 
